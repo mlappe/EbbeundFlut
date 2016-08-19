@@ -131,7 +131,9 @@ class Gamestate():
 
 	def move_is_legal(self,move):
 		"""
-
+		is this move legal? returns true or false
+		move must be of type Move
+		use self.create_Move() to create one
 		"""
 		assert isinstance(move,Move)
 
@@ -256,6 +258,32 @@ class Gamestate():
 		get the card that was drawn this turn
 		"""
 		return self.card
+
+	def make_Move(self,move):
+		"""
+		commits move
+		"""
+
+		assert isinstance(move,Move)
+		assert self.move_is_legal(move)
+
+		start = move.start
+		end = move.end
+
+		cell = self.field[start[1]][start[0]]
+
+		# the following assertions are probably redundant
+		# there has to be a card on the field
+		assert len(cell) > 0
+
+		# getting top card
+		card = cell.pop()
+
+		# card must be owned by the active player
+		assert card.side == self.active_player
+
+		self.field[end[1]][end[0]].append(card)
+
 
 	def cards_left(self):
 		"""

@@ -259,6 +259,34 @@ class Gamestate():
 		"""
 		return self.card
 
+	def make_Move(self,move):
+		"""
+		commits move
+		"""
+		# you have to set a card first
+		assert self.card_played == True
+
+		assert isinstance(move,Move)
+		assert self.move_is_legal(move)
+
+		start = move.start
+		end = move.end
+
+		cell = self.field[start[1]][start[0]]
+
+		# the following assertions are probably redundant
+		# there has to be a card on the field
+		assert len(cell) > 0
+
+		# getting top card
+		card = cell.pop()
+
+		# card must be owned by the active player
+		assert card.side == self.active_player
+
+		self.field[end[1]][end[0]].append(card)
+
+
 	def cards_left(self):
 		"""
 		returns the number of cards in the deck of the active player
