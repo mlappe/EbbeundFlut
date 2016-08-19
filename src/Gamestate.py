@@ -33,6 +33,13 @@ class Gamestate():
 		returns a field with only the top card of every cell
 		"""
 		return [[cell[-1] if len(cell) >0 else Card(None,None,None) for cell in row] for row in self.field]
+	
+	@staticmethod
+	def _mirror_coords(i,j):
+		"""
+		mirrors all coordinates, so that player2 sees the field like player1
+		"""
+		return 4-j,4-i
 
 	def _get_reversed_top_card_field(self):
 		"""
@@ -41,7 +48,7 @@ class Gamestate():
 		"""
 		field = self._get_top_card_field()
 		#i = column j = row
-		mirrored_field = [[[field[4-i][4-j]] for i in range(5)] for j in range(5)]
+		mirrored_field = [[field[Gamestate._mirror_coords(i,j)[0]][Gamestate._mirror_coords(i,j)[1]] for i in range(5)] for j in range(5)]
 		return mirrored_field
 					
 
