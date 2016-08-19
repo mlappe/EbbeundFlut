@@ -2,17 +2,53 @@
 
 import collections
 import random
+import operator
 
-#ai: pointer to an ai instance
-#deck: list of all remaining cards in that players deck, for example [("A",1,"Flut"),("E",3,"Flut")]
+# a namedtuple containig all information relating to a player
+# ai: pointer to an ai instance
+# deck: list of all remaining cards in that players deck, for example [("A",1,1),("E",3,0)]
 PlayerData = collections.namedtuple("PlayerData",["ai","deck"])
 
-# for example ("A",1,"Flut")
-Card = collections.namedtuple("Card",["character","number","side"])
+# a namedtuple representing a Card
+# for example ("A",1,0)
+# subclassing namedtuple
+class Card(collections.namedtuple("Card",["character","number","side"])):
+
+	def __init__(self,character,number,side):
+		"""
+		checking for valid input Data
+		"""
+		assert character in {None,"A","B","C","D","E"}
+		assert number in {None,1,2,3,4,5}
+		assert side in {None,0,1}
+
+	def __repr__(self):
+		"""
+		shows placeholder cards as None, else normal namedtuple representation
+		placeholder cards are cards where all attributes are set to None
+		"""
+		if self.character == None and self.number == None and self.side == None:
+			return str(None)
+		else:
+			return super().__repr__()
 
 # start is a tuple i,j with the start cell
 # end is a tuple i,j with the end cell
-Move = collections.namedtuple("Move",["start","end"])
+# Move = collections.namedtuple("Move",["start","end"])
+class Move(collections.namedtuple("Move",["start","end"])):
+
+	def __init__(self,start,end):
+		"""
+		checking for valid input Data
+		"""
+		#checking that all coords are valid
+		assert start[0] in {0,1,2,3,4}
+		assert start[1] in {0,1,2,3,4}
+		assert end[0] in {0,1,2,3,4,5}
+		assert end[1] in {0,1,2,3,4,5}
+
+		#checking that end is one step away from start
+		assert operator.xor(start[0] == end[0]-1 , start[1] == end[1]-1)
 
 class Gamestate():
 	"""
@@ -28,8 +64,8 @@ class Gamestate():
 		self.active_player = 1 # newturn changes the active player having player 2 here results in player1 starting
 		self.turn_number = 0
 		self.card_drawn = True #was a card drawn this turn?
-		self.card = None #card that has to played this turn
-		self.card_payed = True #did the player already play his card?
+		self.card = None #card that has to be played this turn
+		self.card_played = True #did the player already play his card?
 		self.field = self._create_empty_field()
 
 	def _get_top_card_field(self):
@@ -39,7 +75,7 @@ class Gamestate():
 		return [[cell[-1] if len(cell) >0 else Card(None,None,None) for cell in row] for row in self.field]
 	
 
-	def _possible_moves(self):
+	def possible_moves(self):
 		"""
 		returns all moves the active player could make
 		every move is a namedtuple of type Move
@@ -59,25 +95,50 @@ class Gamestate():
 				#checking for clashes in the same row
 				for i2,card2 in enumerate(row):
 
-					#same card
-					if card == card2:
+					#empty fields or oponents cards
+					if card2.side != self.active_player:
 						continue
+
+					#same card
+					if i == i2:
+						continue
+
+					#every card should only be there once
+					assert card != card2 or card.side == None
 
 					if card.character == card2.character or card.number == card2.number:
 						moves.append(Move((i,j),(i,j+1)))
 
 				#checking for clashes in the same column
 				for j2,row2 in enumerate(field):
-					card2 = row[i]
+					card2 = row2[i]
+
+					#empty fields or oponents cards
+					if card2.side != self.active_player:
+						continue
 
 					#same card
-					if card == card2:
+					if j == j2:
 						continue
+
+					#every card should only be there once
+					assert card != card2 or card.side == None
 
 					if card.character == card2.character or card.number == card2.number:
 						moves.append(Move((i,j),(i+1,j)))
 
 		return set(moves)
+
+	def move_is_legal(self,move):
+		"""
+
+		"""
+		assert isinstance(move,Move)
+
+		if move in self.possible_moves():
+			return True
+		else:
+			return False
 
 	@staticmethod
 	def _mirror_coords(i,j):
@@ -101,7 +162,7 @@ class Gamestate():
 
 	def _create_empty_field(self):
 		#i = column j = row
-		return [[[(i,j)] for i in range(5)] for j in range(5)]
+		return [[[Card(None,None,None)] for i in range(5)] for j in range(5)]
  
 
 	def _get_ac_player(self):
@@ -124,15 +185,17 @@ class Gamestate():
 		self.card_drawn = False
 		self._draw_card()
 
-		assert self.card_payed == True
-		self.card_payed = False
+		assert self.card_played == True
+		self.card_played = False
 
 	def _draw_card(self):
 		"""
 		removes the front card of the deck of the active players
 		"""
+		#check that it is the first draw of the turn
 		assert not self.card_drawn
 		self.card_drawn = True
+
 		self.card = self._get_ac_player().deck.pop()
 
 
@@ -145,9 +208,32 @@ class Gamestate():
 		random.shuffle(deck)
 		return deck
 
+	def create_Move(self,si,sj,ei,ej):
+		"""
+		create a Move namedtuple
+		move from si,sj to ei,ej
+		"""
+		return Move((si,sj),(ei,ej))
 
-	def set_card(self):
-		pass
+
+	def set_card(self,i,j):
+		"""
+		sets the drawn card at position i,j
+		i,j elem of (0,0)(0,1)(1,0)
+		"""
+
+		#every card must nor be set more than once
+		assert self.card_played == False
+		self.card_played = True
+
+		#card has to be set on a starting field
+		assert (i,j) == (0,0) or (i,j) == (1,0) or (i,j) == (0,1)
+
+		#mirror coords for player2
+		if self.active_player == 1:
+			i,j = Gamestate._mirror_coords(i,j)
+
+		self.field[j][i].append(self.card)
 
 	def get_field(self):
 		"""
@@ -159,6 +245,7 @@ class Gamestate():
 		between player1 and 2
 		"""
 		assert self.active_player in {0,1}
+
 		if self.active_player == 0:
 			return self._get_top_card_field()
 		else:
@@ -185,4 +272,12 @@ if __name__ == "__main__":
 	print(g.cards_left())
 	print(g._get_top_card_field())
 	print(g._get_reversed_top_card_field())
+	print(g.set_card(0,0))
+	g._new_turn()
+	print(g.set_card(0,1))
+	g._new_turn()
+	print(g.set_card(0,1))
+	print(g._get_top_card_field())
+	print(g.possible_moves())
+
 
