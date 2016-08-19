@@ -10,6 +10,10 @@ PlayerData = collections.namedtuple("PlayerData",["ai","deck"])
 # for example ("A",1,"Flut")
 Card = collections.namedtuple("Card",["character","number","side"])
 
+# start is a tuple i,j with the start cell
+# end is a tuple i,j with the end cell
+Move = collections.namedtuple("Move",["start","end"])
+
 class Gamestate():
 	"""
 	This class contains the Gamestate and methods to get and change the gamestate
@@ -34,11 +38,54 @@ class Gamestate():
 		"""
 		return [[cell[-1] if len(cell) >0 else Card(None,None,None) for cell in row] for row in self.field]
 	
+
+	def _possible_moves(self):
+		"""
+		returns all moves the active player could make
+		every move is a namedtuple of type Move
+		"""
+		field = self.get_field()
+		moves = list()
+
+		for j, row in enumerate(field):
+			for i, card in enumerate(row):
+
+				assert card.side in {None,0,1}
+
+				#empty fields or oponents cards
+				if card.side != self.active_player:
+					continue
+
+				#checking for clashes in the same row
+				for i2,card2 in enumerate(row):
+
+					#same card
+					if card == card2:
+						continue
+
+					if card.character == card2.character or card.number == card2.number:
+						moves.append(Move((i,j),(i,j+1)))
+
+				#checking for clashes in the same column
+				for j2,row2 in enumerate(field):
+					card2 = row[i]
+
+					#same card
+					if card == card2:
+						continue
+
+					if card.character == card2.character or card.number == card2.number:
+						moves.append(Move((i,j),(i+1,j)))
+
+		return set(moves)
+
 	@staticmethod
 	def _mirror_coords(i,j):
 		"""
 		mirrors all coordinates, so that player2 sees the field like player1
 		"""
+		assert i in {0,1,2,3,4}
+		assert j in {0,1,2,3,4}
 		return 4-j,4-i
 
 	def _get_reversed_top_card_field(self):
