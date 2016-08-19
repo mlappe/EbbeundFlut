@@ -101,8 +101,6 @@ class Gamestate():
 		(a list of list of Card namedtuples)
 		a card := collections.namedtuple("Card",["character","number","side"])
 		if there is no card, a empty card with all values set to None is returned
-		the field is mirrored if for player2, so that there is no difference in position inidices 
-		between player1 and 2
 		"""
 		assert self.active_player in {0,1}
 		if self.active_player == 0:
