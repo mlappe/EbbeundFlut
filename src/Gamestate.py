@@ -131,7 +131,9 @@ class Gamestate():
 
 	def move_is_legal(self,move):
 		"""
-
+		is this move legal? returns true or false
+		move must be of type Move
+		use self.create_Move() to create one
 		"""
 		assert isinstance(move,Move)
 
