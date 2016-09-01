@@ -32,10 +32,17 @@ class Card(collections.namedtuple("Card",["character","number","side"])):
 		else:
 			#ANSI sequences for colors
 			if self.side == 0:
+
+				#red
 				color = 31
+
 			elif self.side == 1:
+
+				#blue
 				color = 34
+
 			color = str(color)
+
 			return "\033["+color+"m" +str(self.character) + str(self.number) + "\033[0m"
 
 # start is a tuple i,j with the start cell
@@ -156,6 +163,7 @@ class Gamestate():
 		# 5 means a move outside of the field => point for the opponent
 		assert i in {0,1,2,3,4,5}
 		assert j in {0,1,2,3,4,5}
+		return 4-i,4-j
 		return 4-j,4-i
 
 	def _get_reversed_top_card_field(self):
@@ -165,7 +173,7 @@ class Gamestate():
 		"""
 		field = self._get_top_card_field()
 		#i = column j = row
-		mirrored_field = [[field[Gamestate._mirror_coords(i,j)[0]][Gamestate._mirror_coords(i,j)[1]] for i in range(5)] for j in range(5)]
+		mirrored_field = [[field[Gamestate._mirror_coords(i,j)[1]][Gamestate._mirror_coords(i,j)[0]] for i in range(5)] for j in range(5)]
 		return mirrored_field
 					
 
@@ -293,10 +301,14 @@ class Gamestate():
 		# getting top card
 		card = cell.pop()
 
-		# card must be owned by the active player
+		#card must not be a placeholder
+		assert card != Card(None,None,None)
+
+		# card has to be owned by the active player
 		assert card.side == self.active_player
 
 		#########################################################points
+		#########################################################dont add if opponents start
 
 		self.field[end[1]][end[0]].append(card)
 
