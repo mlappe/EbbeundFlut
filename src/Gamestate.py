@@ -7,7 +7,7 @@ import operator
 # a namedtuple containig all information relating to a player
 # ai: pointer to an ai instance
 # deck: list of all remaining cards in that players deck, for example [("A",1,1),("E",3,0)]
-PlayerData = collections.namedtuple("PlayerData",["ai","deck"])
+PlayerData = collections.namedtuple("PlayerData",["ai","deck","points"])
 
 # a namedtuple representing a Card
 # for example ("A",1,0)
@@ -24,13 +24,19 @@ class Card(collections.namedtuple("Card",["character","number","side"])):
 
 	def __repr__(self):
 		"""
-		shows placeholder cards as None, else normal namedtuple representation
+		shows placeholder cards as None, else character,number colored
 		placeholder cards are cards where all attributes are set to None
 		"""
 		if self.character == None and self.number == None and self.side == None:
-			return str(None)
+			return "  "
 		else:
-			return super().__repr__()
+			#ANSI sequences for colors
+			if self.side == 0:
+				color = 31
+			elif self.side == 1:
+				color = 34
+			color = str(color)
+			return "\033["+color+"m" +str(self.character) + str(self.number) + "\033[0m"
 
 # start is a tuple i,j with the start cell
 # end is a tuple i,j with the end cell
@@ -58,8 +64,8 @@ class Gamestate():
 
 	def __init__(self,ai1,ai2):
 		
-		player1 = PlayerData(ai1,self._create_new_deck(0))
-		player2 = PlayerData(ai2,self._create_new_deck(1))
+		player1 = PlayerData(ai1,self._create_new_deck(0),0)
+		player2 = PlayerData(ai2,self._create_new_deck(1),0)
 		self.players = [player1,player2]
 		self.active_player = 1 # newturn changes the active player having player 2 here results in player1 starting
 		self.turn_number = 0
@@ -147,8 +153,9 @@ class Gamestate():
 		"""
 		mirrors all coordinates, so that player2 sees the field like player1
 		"""
-		assert i in {0,1,2,3,4}
-		assert j in {0,1,2,3,4}
+		# 5 means a move outside of the field => point for the opponent
+		assert i in {0,1,2,3,4,5}
+		assert j in {0,1,2,3,4,5}
 		return 4-j,4-i
 
 	def _get_reversed_top_card_field(self):
@@ -272,6 +279,11 @@ class Gamestate():
 		start = move.start
 		end = move.end
 
+		if self.active_player == 1:
+			start = Gamestate._mirror_coords(start[0],start[1])
+			end = Gamestate._mirror_coords(end[0],end[1])
+
+
 		cell = self.field[start[1]][start[0]]
 
 		# the following assertions are probably redundant
@@ -283,6 +295,8 @@ class Gamestate():
 
 		# card must be owned by the active player
 		assert card.side == self.active_player
+
+		#########################################################points
 
 		self.field[end[1]][end[0]].append(card)
 
