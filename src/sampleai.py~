@@ -3,6 +3,7 @@ import random
 class sampleai():
 	def move(self,gamestate):
 		while gamestate.possible_moves() != set():
+			print(gamestate.possible_moves())
 			gamestate.make_Move(random.choice(list(gamestate.possible_moves())))
 
 

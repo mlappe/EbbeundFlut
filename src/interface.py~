@@ -25,7 +25,6 @@ class terminal():
 
 	def after_move(self,gamestate):
 		self._clear_and_header(gamestate)
-		print("A move was made")
 		self._display_field(gamestate)
 		input()
 

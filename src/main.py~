@@ -16,6 +16,7 @@ g = Gamestate.Gamestate(ai1=ai1,ai2=ai2,interface=t)
 
 while True:
 	g._new_turn()
+	print("##########################################")
 	player = g._get_ac_player()
 	player.ai.set_card(g)
 	t._display_field(g)

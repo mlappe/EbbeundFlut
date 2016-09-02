@@ -218,6 +218,9 @@ class Gamestate():
 		assert self.card_played == True
 		self.card_played = False
 
+		#hook for interface commands
+		self.interface.start_of_turn(self)
+
 	def _draw_card(self):
 		"""
 		removes the front card of the deck of the active players
@@ -264,6 +267,9 @@ class Gamestate():
 			i,j = Gamestate._mirror_coords(i,j)
 
 		self.field[j][i].append(self.card)
+		
+		#interface hook
+		self.interface.after_card_set(self)
 
 	def get_field(self):
 		"""
@@ -330,10 +336,10 @@ class Gamestate():
 		assert card.side == self.active_player
 
 		#reached opponents start fields
-		if move.end in {(4,4),(3,4),(4,3),(0,0),(0,1),(1,0)}:
+		if move.end in {(4,4),(3,4),(4,3)}:
 			self._get_ac_player().cards_won.append(card)
 		#moved out of the field
-		elif move.end[0] in {-1,5}  or move.end[1] in {-1,5}:
+		elif move.end[0] in {5}  or move.end[1] in {5}:
 			self._get_nac_player().cards_won.append(card)
 		else:
 			self.field[end[1]][end[0]].append(card)
