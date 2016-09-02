@@ -7,7 +7,7 @@ import operator
 # a namedtuple containig all information relating to a player
 # ai: pointer to an ai instance
 # deck: list of all remaining cards in that players deck, for example [("A",1,1),("E",3,0)]
-PlayerData = collections.namedtuple("PlayerData",["ai","deck","points"])
+PlayerData = collections.namedtuple("PlayerData",["ai","deck","cards_won"])
 
 # a namedtuple representing a Card
 # for example ("A",1,0)
@@ -24,7 +24,7 @@ class Card(collections.namedtuple("Card",["character","number","side"])):
 
 	def __repr__(self):
 		"""
-		shows placeholder cards as None, else character,number colored
+		shows placeholder cards as empty string, else character,number colored
 		placeholder cards are cards where all attributes are set to None
 		"""
 		if self.character == None and self.number == None and self.side == None:
@@ -69,10 +69,10 @@ class Gamestate():
 	"""
 	
 
-	def __init__(self,ai1,ai2):
+	def __init__(self,*,ai1,ai2,interface):
 		
-		player1 = PlayerData(ai1,self._create_new_deck(0),0)
-		player2 = PlayerData(ai2,self._create_new_deck(1),0)
+		player1 = PlayerData(ai1,self._create_new_deck(0),[])
+		player2 = PlayerData(ai2,self._create_new_deck(1),[])
 		self.players = [player1,player2]
 		self.active_player = 1 # newturn changes the active player having player 2 here results in player1 starting
 		self.turn_number = 0
@@ -80,6 +80,7 @@ class Gamestate():
 		self.card = None #card that has to be played this turn
 		self.card_played = True #did the player already play his card?
 		self.field = self._create_empty_field()
+		self.interface = interface
 
 	def _get_top_card_field(self):
 		"""
@@ -188,6 +189,18 @@ class Gamestate():
 		"""
 		return self.players[self.active_player]
 
+	def _get_nac_player(self):
+		"""
+		returns the PlayerData of the non active player
+		"""
+		assert self.active_player in {None,0,1}
+
+		result = self.players[1-self.active_player]
+
+		assert result != self._get_ac_player()
+
+		return result
+
 	def _new_turn(self):
 		"""
 
@@ -274,6 +287,15 @@ class Gamestate():
 		"""
 		return self.card
 
+	def get_points(self):
+		"""
+		returns a namedtuple with the points of both players
+		"""
+
+		Points = collections.namedtuple("Points",["Player1","Player2"])
+
+		return Points(*[len(player.cards_won) for player in self.players])
+
 	def make_Move(self,move):
 		"""
 		commits move
@@ -307,10 +329,16 @@ class Gamestate():
 		# card has to be owned by the active player
 		assert card.side == self.active_player
 
-		#########################################################points
-		#########################################################dont add if opponents start
+		#reached opponents start fields
+		if move.end in {(4,4),(3,4),(4,3),(0,0),(0,1),(1,0)}:
+			self._get_ac_player().cards_won.append(card)
+		#moved out of the field
+		elif move.end[0] in {-1,5}  or move.end[1] in {-1,5}:
+			self._get_nac_player().cards_won.append(card)
+		else:
+			self.field[end[1]][end[0]].append(card)
 
-		self.field[end[1]][end[0]].append(card)
+		self.interface.after_move(self)
 
 
 	def cards_left(self):
