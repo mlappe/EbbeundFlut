@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import Gamestate as Gamestate
-import Interface.interface
-import Ai.sampleai
+import Interface
+import Ai
 
 
 ai1 = Ai.sampleai.sampleai()

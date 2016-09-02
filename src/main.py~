@@ -2,15 +2,15 @@
 
 import Gamestate as Gamestate
 import Interface.interface
-import Ai.sampleai
+import Ai
 
 
 ai1 = Ai.sampleai.sampleai()
-ai2 = randomai.sampleai()
+ai2 = Ai.sampleai.sampleai()
 
 
 
-t = interface.terminal()
+t = Interface.interface.terminal()
 g = Gamestate.Gamestate(ai1=ai1,ai2=ai2,interface=t)
 
 
